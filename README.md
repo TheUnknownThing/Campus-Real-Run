@@ -25,9 +25,17 @@ Ensure the version number is 4.14.16 or higher. If not, check the [pymobiledevic
 
 ## Usage
 
-### Note
+### Attention
 
-All operations require Administrator privileges. Make sure to run the command prompt as **Administrator**.
+Please read the following carefully:
+
+- All operations require Administrator privileges. Make sure to run the command prompt as **Administrator**.
+
+- If you encounter the problem "[winError 10054] The remote host forcibly closed an existing connection.", please try restarting your computer and phone first, and check if there is any proxy software running in the background! If there is a proxy software, please turn it off!
+
+- If you are a user of `iOS 17.3` and below, in the second step `START-TUNNEL`, use the following command: `python -m pymobiledevice3 remote start-tunnel`.
+
+- If you are a user of `iOS 16` and below, when simulating the location, please modify the `main.py` file, `command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'` to: `command = f'pymobiledevice3 developer simulate-location set -- lat long'`
 
 ### Establish Connection
 
