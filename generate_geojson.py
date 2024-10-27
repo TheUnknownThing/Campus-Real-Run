@@ -69,6 +69,6 @@ def main(num_features, output_format):
     with open(f'data.{file_extension}', 'w') as f:
         f.write(result)
 
-num_features = 170
+num_features = 170 # approximate 2km
 output_format = 'geojson'  # Change to 'gpx' for GPX output
 main(num_features, output_format)
