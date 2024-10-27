@@ -25,7 +25,15 @@ pymobiledevice3 version
 
 ### 注意
 
-所有操作都需要管理员权限。请确保以**管理员身份**运行命令提示符。
+务必仔细阅读以下内容：
+
+- 所有操作都需要管理员权限。请确保以**管理员身份**运行命令提示符。
+
+- 如果你遇到问题“[winError 10054]远程主机强迫关闭了一个现有的连接。” 请先尝试重启你的电脑和手机，并检查是否有代理软件在后台运行！如果有代理软件，请关闭！
+
+- 如果你是`iOS 17.3` 及以下的用户，在第二步`START-TUNNEL`时，使用如下命令：`python -m pymobiledevice3 remote start-tunnel`。
+
+- 如果你是`iOS 16` 及以下的用户，在模拟位置时，请你修改`main.py`文件，`command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'`改成：`command = f'pymobiledevice3 developer simulate-location set -- {long} {lat}'`。
 
 ### 建立连接
 
