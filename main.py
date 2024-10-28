@@ -21,16 +21,18 @@ Welcome to Campus-Real-Run CLI!
 Type help or ? to list commands.
 Start with 'init' to setup the connection.
 Note: 
-    - Please run this program with administrator privileges.
-    - Use 'init --ios17' for iOS 17.4+ devices.
-    - Connect your device to the computer before running the commands.
+    - !important: Please run this program with administrator privileges.
+    - !important: Use 'init --ios17' for iOS 17.4+ devices.
+    - !important: Connect your device to the computer before running the commands.
+    - !important: DO NOT close the terminal window while the program is running.
 
 输入 help 或 ? 查看命令列表。
 使用 'init' 命令初始化设备连接。
 注意：
-    - 请以管理员权限运行此程序。
-    - 对于iOS 17.4+设备，请使用 'init --ios17' 命令。
-    - 在运行命令前请先连接设备到电脑。
+    - !重要：请以管理员权限运行此程序。
+    - !重要：对于iOS 17.4+设备，请使用 'init --ios17' 命令。
+    - !重要：在运行命令前请先连接设备到电脑。
+    - !重要：程序运行时请勿关闭终端窗口。
     '''
     prompt = 'run> '
     
@@ -42,7 +44,15 @@ Note:
         self.coordinates = []
         self.initialized = False
         self.route_loaded = False
-        
+        self.python_cmd = self.detect_python_version()
+
+    def detect_python_version(self):
+        try:
+            subprocess.check_output("python3 --version", shell=True)
+            return "python3"
+        except subprocess.CalledProcessError:
+            return "python"
+
     def check_admin(self):
         try:
             return os.getuid() == 0
@@ -56,7 +66,7 @@ Note:
                 return subprocess.check_output(command, shell=True, text=True)
             else:
                 process = subprocess.Popen(
-                    command,
+                    f'start cmd /k {command}',
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -86,17 +96,17 @@ Note:
             return
 
         logger.info("正在启动tunneld服务...")
-        self.tunneld_process = self.run_command("python -m pymobiledevice3 remote tunneld")
+        self.tunneld_process = self.run_command(f"{self.python_cmd} -m pymobiledevice3 remote tunneld")
         time.sleep(2)
 
         logger.info("正在启动tunnel服务...")
-        tunnel_command = "python -m pymobiledevice3 lockdown start-tunnel" if self.is_ios17_plus else \
-                        "python -m pymobiledevice3 remote start-tunnel"
+        tunnel_command = f"{self.python_cmd} -m pymobiledevice3 lockdown start-tunnel" if self.is_ios17_plus else \
+                        f"{self.python_cmd} -m pymobiledevice3 remote start-tunnel"
         self.tunnel_process = self.run_command(tunnel_command)
         time.sleep(2)
 
         logger.info("测试DVT服务...")
-        test_output = self.run_command("python -m pymobiledevice3 developer dvt ls /", check_output=True)
+        test_output = self.run_command(f"{self.python_cmd} -m pymobiledevice3 developer dvt ls /", check_output=True)
         if test_output and "/Applications" in test_output:
             logger.info("连接成功建立！")
             self.initialized = True

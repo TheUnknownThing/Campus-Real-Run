@@ -10,11 +10,13 @@ This tool uses Python to simulate GPS locations on iOS devices for campus runnin
 - iOS device (properly installed drivers, connected to computer, developer mode enabled)
 - Administrator privileges (Windows-UAC, macOS-Linux-sudo)
 
-## Known Issues and Solutions
+## Todo
 
-- `main.py` may freeze after simulating locations for a period of time. After investigation, this issue is related to the `lockdown start-tunnel` command. It will inexplicably stop running after a certain period, while manually starting it does not have this issue. For a solution to this issue, please submit a PR.
+- [x] ~~`main.py` may freeze after simulating locations for a period of time. After investigation, this issue is related to the `lockdown start-tunnel` command. It will inexplicably stop running after a certain period, while manually starting it does not have this issue. For a solution to this issue, please submit a PR.~~ fixed.
 
-- Therefore, I still recommend the manual command line steps described at the end of this document.
+- [ ] add a feature to automatically generate a route file based on the user's input.
+
+- [ ] bilingual support for the program.
 
 ## Important Notes
 
@@ -22,7 +24,7 @@ Please read the following carefully:
 
 - All operations require administrator privileges. Make sure to run the command prompt as **administrator**.
 
-- If you encounter the error "[winError 10054] The remote host forcibly closed an existing connection," try restarting your computer and phone first, and check if any proxy software is running in the background! If there is proxy software, please close it!
+- If you encounter the error "[winError 10054] The remote host forcibly closed an existing connection," **try restarting your computer and phone first, and check if any proxy software is running in the background!** Really important tips if you encounter the problem! If there is proxy software, please close it!
 
 - Although the program has implemented user-friendly operations like `start-tunnel` and `tunneld`, we still recommend manual command-line operation (see latter part of this document) for first-time users to better observe potential error messages.
 
