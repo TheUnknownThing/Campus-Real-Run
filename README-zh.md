@@ -5,10 +5,28 @@
 ## 前置要求
 
 - Python 3.x
-- iOS 设备（需要正确安装驱动）
-- Windows 管理员权限
+- iOS 设备（需要正确安装驱动，且连接至电脑，开启开发者模式）
+- 管理员权限（Windows-UAC，macOS-Linux-sudo）
 
-## 安装方法
+## 已知问题
+
+- 目前`main.py`在模拟位置一段时间后会出现卡死的现象。经过检查，这是`lockdown start-tunnel`命令的问题。莫名其妙地会在一定时间后停止运行，而手动启动之不会有这个问题。关于这个问题的解决方案，欢迎提交PR。
+
+- 所以目前我推荐的方式仍然是本文文末所述的手动操作命令行步骤。
+
+## 注意
+
+务必仔细阅读以下内容：
+
+- 所有操作都需要管理员权限。请确保以**管理员身份**运行命令提示符。
+
+- 如果你遇到问题“[winError 10054]远程主机强迫关闭了一个现有的连接。” 请先尝试重启你的电脑和手机，并检查是否有代理软件在后台运行！如果有代理软件，请关闭！
+
+- 尽管程序已经实现了`start-tunnel`,`tunneld`等开启的傻瓜化操作。但是在初次使用时，我们仍然推荐你手动操作命令行（见本文后半部分），以便更好地观察到（可能存在的）报错信息。
+
+- 我的设备没有开启开发者权限怎么办/没有驱动怎么办？我推荐使用爱思助手。但我不推荐使用爱思助手的虚拟定位功能，因为其无法保证定位的稳定性（也即，会在目标位置和真实位置间反复横跳）
+
+## 包安装
 
 1. 安装必需的 Python 包：
 ```bash
@@ -21,19 +39,108 @@ pymobiledevice3 version
 ```
 确保版本号为 4.14.16 或更高。如果不是，请查看 [pymobiledevice3 仓库](https://github.com/doronz88/pymobiledevice3) 获取正确的安装说明。
 
+## 功能特点
+
+- 支持 iOS 16 及以下版本设备
+- 支持 iOS 17.4+ 设备（需要特殊初始化）
+- 自定义路线导入（支持 GeoJSON 格式）
+- 实时位置模拟
+
 ## 使用方法
+
+1. 以管理员权限运行程序：
+```bash
+# Windows (管理员权限)
+python campus_run.py
+
+# Linux/macOS
+sudo python campus_run.py
+```
+
+2. 正确的程序运行步骤：
+
+- `init`：初始化设备连接
+  ```bash
+  run> init           # iOS 16 及以下版本
+  run> init --ios17   # iOS 17.4+ 版本
+  ```
+
+- `load`：加载路线文件
+  ```bash
+  run> load               # 加载默认名为 data.geojson 文件
+  run> load route.geojson # 加载指定的路线文件
+  ```
+
+- `start`：开始位置模拟
+  ```bash
+  run> start
+  ```
+
+- `status`：查看当前状态
+  ```bash
+  run> status
+  ```
+
+- `cleanup`：清理连接和进程
+  ```bash
+  run> cleanup
+  ```
+
+- `exit`：退出程序
+  ```bash
+  run> exit
+  ```
+
+## 路线文件格式
+
+程序使用 GeoJSON 格式的路线文件，示例结构如下：
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [longitude1, latitude1],
+          [longitude2, latitude2],
+          ...
+        ]
+      }
+    }
+  ]
+}
+```
+
+我提供了一个默认的路线文件 `example_data.geojson`，你也可以使用 `generate_geojson.py` 脚本生成自定义路线。
+
+## 注意事项
+
+1. 必须以管理员/root权限运行程序
+2. 运行命令前确保设备已正确连接到电脑
+3. 对于 iOS 17.4+ 的设备，需要使用 `init --ios17` 命令进行初始化
+4. 使用 Ctrl+C 可以随时停止位置模拟
+5. 如需重新初始化，请先使用 `cleanup` 命令清理现有连接
+
+## 故障排除
+
+1. 如果连接失败，请检查：
+   - 设备是否正确连接
+   - 是否以管理员权限运行
+   - iOS 版本是否与初始化命令匹配
+
+2. 如果位置模拟失败，请尝试：
+   - 使用 `cleanup` 命令清理连接
+   - 重新执行 `init` 命令
+   - 确认路线文件格式是否正确
+
+## 手动操作命令行步骤
 
 ### 注意
 
-务必仔细阅读以下内容：
-
-- 所有操作都需要管理员权限。请确保以**管理员身份**运行命令提示符。
-
-- 如果你遇到问题“[winError 10054]远程主机强迫关闭了一个现有的连接。” 请先尝试重启你的电脑和手机，并检查是否有代理软件在后台运行！如果有代理软件，请关闭！
-
-- 如果你是`iOS 17.3` 及以下的用户，在第二步`START-TUNNEL`时，使用如下命令：`python -m pymobiledevice3 remote start-tunnel`。
-
-- 如果你是`iOS 16` 及以下的用户，在模拟位置时，请你修改`main.py`文件，`command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'`改成：`command = f'pymobiledevice3 developer simulate-location set -- {long} {lat}'`。
+- 如果你是`iOS 17.3` **及以下**的用户，在第二步`START-TUNNEL`时，使用如下命令：`python -m pymobiledevice3 remote start-tunnel`。
 
 ### 建立连接
 
@@ -94,7 +201,7 @@ python -m pymobiledevice3 developer dvt ls /
 /cores
 ```
 
-此时你已经成功99%了，接下来就是运行模拟器了。
+此时你已经成功99%了，接下来你可以关闭上面所述的所有窗口，运行`python main.py`，并进行傻瓜式操作。
 
 ### 运行位置模拟
 
@@ -107,6 +214,11 @@ python -m pymobiledevice3 developer dvt ls /
 
 `generate_geojson.py` 脚本会创建一个具有适当坐标间距的路线。你可以通过修改脚本参数来自定义起始坐标和距离：
 
+生成路线文件：
+```bash
+python generate_geojson.py
+```
+
 ```python
 # 当前默认值：
 lon = 121.4276  # 起始经度
@@ -116,27 +228,19 @@ num_features = 170  # 大约 2 公里的路线
 
 要找到特定位置的坐标，你可以使用[高德地图坐标拾取器](https://lbs.amap.com/tools/picker)。
 
-#### 运行模拟
+#### 开始模拟
 
-1. 生成路线文件：
+使用管理员权限运行`simulate-location.py`脚本：
 ```bash
-python generate_geojson.py
+python simulate-location.py
 ```
 
-2. 开始位置模拟：
+你会看到类似以下的输出：
 ```bash
-python main.py
+Simulating location: 31.027519999999985, 121.4424799999999
+Simulating location: 31.027439999999984, 121.4425599999999
+Simulating location: 31.027359999999984, 121.4426399999999
 ```
-
-如果一切正常，你会看到类似以下的输出：
-```bash
-Simulating location: 31.180029999999924, 121.43895999999957
-Simulating location: 31.179949999999923, 121.43903999999957
-Simulating location: 31.179869999999923, 121.43911999999956
-Simulating location: 31.179789999999922, 121.43919999999956
-Simulating location: 31.179709999999922, 121.43927999999956
-```
-打开地图应用，你会看到模拟的位置在不断移动。此时你可以开始校园跑活动了！
 
 ## 技术细节
 

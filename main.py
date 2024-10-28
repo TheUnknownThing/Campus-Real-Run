@@ -125,7 +125,7 @@ Note:
                 if feature['geometry']['type'] == 'LineString':
                     self.coordinates.extend(feature['geometry']['coordinates'])
             
-            logger.info(f"成功加载 {len(self.coordinates)} 个坐标点，来自文件 {file_path}")
+            logger.info(f"成功加载 {len(self.coordinates) / 3} 个坐标点，来自文件 {file_path}")
             self.route_loaded = True
         except Exception as e:
             logger.error(f"加载路线文件失败: {e}")
@@ -163,7 +163,7 @@ Note:
                 process.communicate(input=b'\n')
                 
                 skip_idx = 0
-                sleep_time = 2 + (0.5 * random.random())
+                sleep_time = 2.5
                 time.sleep(sleep_time)
                 
         except KeyboardInterrupt:
