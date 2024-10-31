@@ -14,7 +14,7 @@
 
 - [ ] 增加自动生成操场路线的功能。
 
-- [ ] 双语支持。
+- [x] 双语支持。
 
 ## 注意
 
@@ -75,7 +75,8 @@ sudo python campus_run.py
 
 - `start`：开始位置模拟
   ```bash
-  run> start
+  run> start         # 适用于 iOS 17 及以上版本设备
+  run> start --ios16 # 适用于 iOS 16 及以下版本设备
   ```
 
 - `status`：查看当前状态
@@ -108,7 +109,7 @@ sudo python campus_run.py
         "coordinates": [
           [longitude1, latitude1],
           [longitude2, latitude2],
-          ...
+          [longitude2, latitude2]
         ]
       }
     }
