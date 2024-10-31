@@ -8,7 +8,6 @@ import logging
 from pathlib import Path
 import random
 
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -74,55 +73,79 @@ Note:
                 )
                 return process
         except subprocess.CalledProcessError as e:
-            logger.error(f"命令执行失败: {e}")
+            logger.error(f"命令执行失败: {e} / Command execution failed: {e}")
             return None
 
     def do_init(self, arg):
         """
-        初始化设备连接
-        用法: init [--ios17]
-        示例:
-            init         # 用于iOS 16及以下版本
-            init --ios17 # 用于iOS 17.4及以上版本
+        初始化设备连接 / Initialize device connection
+        用法 / Usage: init [--ios17]
+        示例 / Example:
+            init         # 用于iOS 16及以下版本 / For iOS 16 and below
+            init --ios17 # 用于iOS 17.4及以上版本 / For iOS 17.4 and above
         """
         if self.initialized:
-            logger.warning("已经初始化过了！如需重新初始化，请先使用 'cleanup' 命令清理现有连接")
+            logger.warning("已经初始化过了！如需重新初始化，请先使用 'cleanup' 命令清理现有连接 / Already initialized! To reinitialize, please use the 'cleanup' command to clear existing connections")
             return
 
         self.is_ios17_plus = "--ios17" in arg
         
         if not self.check_admin():
-            logger.error("请使用管理员权限运行此程序！")
+            logger.error("请使用管理员权限运行此程序！ / Please run this program with administrator privileges!")
             return
 
-        logger.info("正在启动tunneld服务...")
+        logger.info("检查开发者模式状态... / Checking developer mode status...")
+        dev_mode_status = self.run_command(f"{self.python_cmd} -m pymobiledevice3 amfi developer-mode-status", check_output=True)
+        if "false" in dev_mode_status:
+            logger.error("开发者模式未启用，请使用 'enable_dev_mode' 命令启用开发者模式 / Developer mode is not enabled, please use the 'enable_dev_mode' command to enable developer mode")
+            return
+
+        logger.info("正在启动tunneld服务... / Starting tunneld service...")
         self.tunneld_process = self.run_command(f"{self.python_cmd} -m pymobiledevice3 remote tunneld")
         time.sleep(2)
 
-        logger.info("正在启动tunnel服务...")
+        logger.info("正在启动tunnel服务... / Starting tunnel service...")
         tunnel_command = f"{self.python_cmd} -m pymobiledevice3 lockdown start-tunnel" if self.is_ios17_plus else \
                         f"{self.python_cmd} -m pymobiledevice3 remote start-tunnel"
         self.tunnel_process = self.run_command(tunnel_command)
         time.sleep(2)
 
-        logger.info("测试DVT服务...")
+        logger.info("测试DVT服务... / Testing DVT service...")
         test_output = self.run_command(f"{self.python_cmd} -m pymobiledevice3 developer dvt ls /", check_output=True)
         if test_output and "/Applications" in test_output:
-            logger.info("连接成功建立！")
+            logger.info("连接成功建立！ / Connection established successfully!")
             self.initialized = True
         else:
-            logger.error("连接失败，请检查设备连接和权限设置")
+            logger.error("连接失败，请检查设备连接和权限设置 / Connection failed, please check device connection and permission settings")
+
+    def do_enable_dev_mode(self, arg):
+        """
+        启用开发者模式 / Enable developer mode
+        用法 / Usage: enable_dev_mode
+        """
+        logger.info("启用开发者模式... / Enabling developer mode...")
+        self.run_command(f"{self.python_cmd} -m pymobiledevice3 amfi enable-developer-mode")
+        logger.info("设备正在重启，请稍后再检查开发者模式状态 / Device is restarting, please check developer mode status later")
+
+    def do_check_dev_mode_status(self, arg):
+        """
+        检查开发者模式状态 / Check developer mode status
+        用法 / Usage: check_dev_mode_status
+        """
+        logger.info("检查开发者模式状态... / Checking developer mode status...")
+        status = self.run_command(f"{self.python_cmd} -m pymobiledevice3 amfi developer-mode-status", check_output=True)
+        logger.info(f"开发者模式状态: {status.strip()} / Developer mode status: {status.strip()}")
 
     def do_load(self, arg):
         """
-        加载路线文件
-        用法: load [文件路径]
-        示例:
-            load              # 加载默认的data.geojson文件
-            load route.geojson  # 加载指定的路线文件
+        加载路线文件 / Load route file
+        用法 / Usage: load [文件路径 / file path]
+        示例 / Example:
+            load              # 加载默认的data.geojson文件 / Load the default data.geojson file
+            load route.geojson  # 加载指定的路线文件 / Load the specified route file
         """
         if not self.initialized:
-            logger.error("请先使用 'init' 命令初始化连接！")
+            logger.error("请先使用 'init' 命令初始化连接！ / Please initialize connection first using 'init' command!")
             return
 
         file_path = arg if arg else "data.geojson"
@@ -135,86 +158,97 @@ Note:
                 if feature['geometry']['type'] == 'LineString':
                     self.coordinates.extend(feature['geometry']['coordinates'])
             
-            logger.info(f"成功加载 {len(self.coordinates) / 3} 个坐标点，来自文件 {file_path}")
+            logger.info(f"成功加载 {len(self.coordinates) / 3} 个坐标点，来自文件 {file_path} / Successfully loaded {len(self.coordinates) / 3} coordinates from file {file_path}")
             self.route_loaded = True
         except Exception as e:
-            logger.error(f"加载路线文件失败: {e}")
+            logger.error(f"加载路线文件失败: {e} / Failed to load route file: {e}")
 
     def do_start(self, arg):
         """
-        开始模拟位置移动
-        用法: start
-        提示: 使用Ctrl+C可以停止模拟
+        开始模拟位置移动 / Start simulating location movement
+        用法 / Usage: start [--ios16]
+        提示 / Note: 使用Ctrl+C可以停止模拟 / Use Ctrl+C to stop simulation
         """
         if not self.initialized:
-            logger.error("请先使用 'init' 命令初始化连接！")
+            logger.error("请先使用 'init' 命令初始化连接！ / Please initialize connection first using 'init' command!")
             return
-        
+
         if not self.route_loaded:
-            logger.error("请先使用 'load' 命令加载路线文件！")
+            logger.error("请先使用 'load' 命令加载路线文件！ / Please load route file first using 'load' command!")
             return
+
+        # Check for '--ios16' argument
+        is_ios16 = '--ios16' in arg
 
         try:
             skip_idx = 0
-            logger.info("开始模拟位置移动...")
-            logger.info("按Ctrl+C可以停止模拟")
-            
+            logger.info("开始模拟位置移动... / Starting location simulation...")
+            logger.info("按Ctrl+C可以停止模拟 / Press Ctrl+C to stop simulation")
+
             for coord in self.coordinates:
                 if skip_idx == 0 or skip_idx == 1:
                     skip_idx += 1
                     continue
-                
+
                 lat, long = coord[0], coord[1]
-                logger.info(f'正在模拟位置: {long}, {lat}')
-                
-                command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'
-                process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, 
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                logger.info(f'正在模拟位置: {long}, {lat} / Simulating location: {long}, {lat}')
+
+                if is_ios16:
+                    # For iOS < 17.0
+                    command = f'pymobiledevice3 developer simulate-location set -- {lat} {long}'
+                else:
+                    # For iOS 17.0 and above
+                    command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'
+
+                process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 process.communicate(input=b'\n')
-                
+
                 skip_idx = 0
                 sleep_time = 2.5
                 time.sleep(sleep_time)
-                
+
         except KeyboardInterrupt:
-            logger.info("\n停止位置模拟...")
+            logger.info("\n停止位置模拟... / Stopping location simulation...")
         except Exception as e:
-            logger.error(f"位置模拟过程中出错: {e}")
+            logger.error(f"位置模拟过程中出错: {e} / Error during location simulation: {e}")
 
     def do_cleanup(self, arg):
         """
-        清理所有连接和进程
-        用法: cleanup
+        清理所有连接和进程 / Clean up all connections and processes
+        用法 / Usage: cleanup
         """
         if self.tunneld_process:
             self.tunneld_process.terminate()
+            self.tunneld_process.wait()
             self.tunneld_process = None
         if self.tunnel_process:
             self.tunnel_process.terminate()
+            self.tunnel_process.wait()
             self.tunnel_process = None
         self.initialized = False
         self.route_loaded = False
-        logger.info("已清理所有进程和连接")
+        logger.info("已清理所有进程和连接 / All processes and connections have been cleaned up")
 
     def do_status(self, arg):
         """
-        显示当前状态
-        用法: status
+        显示当前状态 / Show current status
+        用法 / Usage: status
         """
-        print("\n当前状态:")
-        print(f"初始化状态: {'已初始化' if self.initialized else '未初始化'}")
-        print(f"路线加载状态: {'已加载' if self.route_loaded else '未加载'}")
-        print(f"iOS版本设置: {'iOS 17.4+' if self.is_ios17_plus else 'iOS 16及以下'}")
-        print(f"已加载坐标点数量: {len(self.coordinates)}")
+        print("\n当前状态 / Current status:")
+        print(f"初始化状态: {'已初始化' if self.initialized else '未初始化'} / Initialization status: {'Initialized' if self.initialized else 'Not initialized'}")
+        print(f"路线加载状态: {'已加载' if self.route_loaded else '未加载'} / Route load status: {'Loaded' if self.route_loaded else 'Not loaded'}")
+        print(f"iOS版本设置: {'iOS 17.4+' if self.is_ios17_plus else 'iOS 16及以下'} / iOS version setting: {'iOS 17.4+' if self.is_ios17_plus else 'iOS 16 and below'}")
+        print(f"已加载坐标点数量: {len(self.coordinates)} / Number of loaded coordinates: {len(self.coordinates)}")
         print()
 
     def do_exit(self, arg):
         """
-        退出程序
-        用法: exit
+        退出程序 / Exit the program
+        用法 / Usage: exit
         """
         self.do_cleanup(arg)
-        logger.info("退出程序...")
+        logger.info("退出程序... / Exiting the program...")
         return True
 
     # 别名
@@ -225,5 +259,5 @@ if __name__ == '__main__':
     try:
         CampusRunShell().cmdloop()
     except KeyboardInterrupt:
-        logger.info("\n程序被中断，正在清理...")
+        logger.info("\n程序被中断，正在清理... / Program interrupted, cleaning up...")
         sys.exit(0)

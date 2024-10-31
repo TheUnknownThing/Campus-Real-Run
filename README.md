@@ -16,7 +16,7 @@ This tool uses Python to simulate GPS locations on iOS devices for campus runnin
 
 - [ ] add a feature to automatically generate a route file based on the user's input.
 
-- [ ] bilingual support for the program.
+- [x] bilingual support for the program.
 
 ## Important Notes
 
@@ -77,7 +77,8 @@ sudo python campus_run.py
 
 - `start`: Start location simulation
   ```bash
-  run> start
+  run> start         # For iOS 17 and above devices
+  run> start --ios16 # For iOS 16 and below devices
   ```
 
 - `status`: Check current status
@@ -110,7 +111,7 @@ The program uses GeoJSON format route files. Example structure:
         "coordinates": [
           [longitude1, latitude1],
           [longitude2, latitude2],
-          ...
+          [longitude2, latitude2]
         ]
       }
     }
