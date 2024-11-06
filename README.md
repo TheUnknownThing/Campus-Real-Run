@@ -55,10 +55,10 @@ Ensure the version is 4.14.16 or higher. If not, check the [pymobiledevice3 repo
 1. Run the program with administrator privileges:
 ```bash
 # Windows (Administrator privileges)
-python campus_run.py
+python main.py
 
 # Linux/macOS
-sudo python campus_run.py
+sudo python main.py
 ```
 
 2. Correct program execution steps:

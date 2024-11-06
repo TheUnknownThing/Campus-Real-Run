@@ -53,10 +53,10 @@ pymobiledevice3 version
 1. 以管理员权限运行程序：
 ```bash
 # Windows (管理员权限)
-python campus_run.py
+python main.py
 
 # Linux/macOS
-sudo python campus_run.py
+sudo python main.py
 ```
 
 2. 正确的程序运行步骤：
