@@ -42,7 +42,6 @@ Note:
         self.is_ios17_plus = False
         self.coordinates = []
         self.initialized = False
-        self.route_loaded = False
         self.python_cmd = self.detect_python_version()
 
     def detect_python_version(self):
@@ -136,80 +135,46 @@ Note:
         status = self.run_command(f"{self.python_cmd} -m pymobiledevice3 amfi developer-mode-status", check_output=True)
         logger.info(f"开发者模式状态: {status.strip()} / Developer mode status: {status.strip()}")
 
-    def do_load(self, arg):
-        """
-        加载路线文件 / Load route file
-        用法 / Usage: load [文件路径 / file path]
-        示例 / Example:
-            load              # 加载默认的data.geojson文件 / Load the default data.geojson file
-            load route.geojson  # 加载指定的路线文件 / Load the specified route file
-        """
-        if not self.initialized:
-            logger.error("请先使用 'init' 命令初始化连接！ / Please initialize connection first using 'init' command!")
-            return
-
-        file_path = arg if arg else "data.geojson"
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                geojson_data = json.load(f)
-            
-            self.coordinates = []
-            for feature in geojson_data['features']:
-                if feature['geometry']['type'] == 'LineString':
-                    self.coordinates.extend(feature['geometry']['coordinates'])
-            
-            logger.info(f"成功加载 {len(self.coordinates) / 3} 个坐标点，来自文件 {file_path} / Successfully loaded {len(self.coordinates) / 3} coordinates from file {file_path}")
-            self.route_loaded = True
-        except Exception as e:
-            logger.error(f"加载路线文件失败: {e} / Failed to load route file: {e}")
-
     def do_start(self, arg):
         """
         开始模拟位置移动 / Start simulating location movement
-        用法 / Usage: start [--ios16]
+        用法 / Usage: start [data.gpx]
+        字段说明 / Field description: [data.gpx] - GPX文件路径 / GPX file path, 必填 / Required
         提示 / Note: 使用Ctrl+C可以停止模拟 / Use Ctrl+C to stop simulation
         """
         if not self.initialized:
             logger.error("请先使用 'init' 命令初始化连接！ / Please initialize connection first using 'init' command!")
             return
 
-        if not self.route_loaded:
-            logger.error("请先使用 'load' 命令加载路线文件！ / Please load route file first using 'load' command!")
+        if not arg:
+            logger.error("请提供GPX文件路径！ / Please provide the GPX file path!")
             return
+        
+        if not arg.endswith('.gpx'):
+            logger.error("无效的GPX文件路径！ / Invalid GPX file path!")
+            return
+        
+        gpx_file = Path(arg)
 
-        # Check for '--ios16' argument
-        is_ios16 = '--ios16' in arg
+        logger.info("开始模拟位置移动... / Starting location simulation...")
+        logger.info("按Ctrl+C可以停止模拟 / Press Ctrl+C to stop simulation")
 
+        logger.info('启动模拟位置 / Simulating location')
+
+        command = f'pymobiledevice3 developer dvt simulate-location play {gpx_file}'
         try:
-            skip_idx = 0
-            logger.info("开始模拟位置移动... / Starting location simulation...")
-            logger.info("按Ctrl+C可以停止模拟 / Press Ctrl+C to stop simulation")
-
-            for coord in self.coordinates:
-                if skip_idx == 0 or skip_idx == 1:
-                    skip_idx += 1
-                    continue
-
-                lat, long = coord[0], coord[1]
-                logger.info(f'正在模拟位置: {long}, {lat} / Simulating location: {long}, {lat}')
-
-                if is_ios16:
-                    # For iOS < 17.0
-                    command = f'pymobiledevice3 developer simulate-location set -- {lat} {long}'
-                else:
-                    # For iOS 17.0 and above
-                    command = f'pymobiledevice3 developer dvt simulate-location set -- {long} {lat}'
-
-                process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
-                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                process.communicate(input=b'\n')
-
-                skip_idx = 0
-                sleep_time = 2.5
-                time.sleep(sleep_time)
-
+            process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+            for line in process.stdout:
+                print(line, end='')
         except KeyboardInterrupt:
             logger.info("\n停止位置模拟... / Stopping location simulation...")
+            process.terminate()
         except Exception as e:
             logger.error(f"位置模拟过程中出错: {e} / Error during location simulation: {e}")
 
