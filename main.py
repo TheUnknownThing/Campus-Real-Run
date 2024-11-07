@@ -161,7 +161,7 @@ Note:
 
         logger.info('启动模拟位置 / Simulating location')
 
-        command = f'pymobiledevice3 developer dvt simulate-location play {gpx_file}'
+        command = f'pymobiledevice3 developer dvt simulate-location play {gpx_file} 1000'
         try:
             process = subprocess.Popen(
                 command,
