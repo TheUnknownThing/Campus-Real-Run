@@ -28,6 +28,12 @@
 
 - 我没有在 Windows 上安装驱动怎么办？我推荐使用爱思助手。但我不推荐使用爱思助手的虚拟定位功能，因为其无法保证定位的稳定性（也即，会在目标位置和真实位置间反复横跳）
 
+## Credits
+
+- [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) - Python library for interacting with iOS devices
+- [佚名战神](https://github.com/YimingZhanshen) - 增加了坐标偏移的功能，但他的账号已经被 GitHub 封禁，所以我为他修改了代码。
+
+
 ## 包安装
 
 1. 安装必需的 Python 包：

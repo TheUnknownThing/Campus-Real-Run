@@ -30,6 +30,12 @@ Please read the following content carefully:
 
 - What if I haven't installed drivers on Windows? I recommend using iMazing. However, I don't recommend using iMazing's virtual location feature as it cannot guarantee location stability (i.e., it will repeatedly jump between target and real locations)
 
+## Credits
+
+- [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) - Python library for interacting with iOS devices
+- [YimingZhanshen](https://github.com/YimingZhanshen) - added the function fluctuation of the running track, but his account has been banned by GitHub, so I modify the code for him.
+
+
 ## Package Installation
 
 1. Install required Python packages:
