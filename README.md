@@ -253,6 +253,16 @@ So your running path is:
 
 To find coordinates for specific locations, you can use the [AMap Coordinate Picker](https://lbs.amap.com/tools/picker).
 
+## The use of GUI file
+When you go to run campus_run_gui.py as administrator, the program will first ask you to select the main.py file (which is written based on the functionality implemented in main.py), this is where you need to select the main.py file in the root directory in the dialog box that pops up. Once selected, a visualization window will appear, with functional buttons on the left (consistent with the functions and nomenclature in the main.py file).
+
+In particular, when you click on the help button, an additional window will pop up, and clicking on the corresponding function will bring up the same explanation as in main.py.
+All prompts and processes are displayed in a dialog box in the right center, and the display is consistent with the original's display in the terminal.
+
+In the end, just enjoy it!!!
+
+
+
 ## Contributing
 
 Issues and feature improvement requests are welcome!

@@ -42,7 +42,7 @@ Note:
         self.is_ios17_plus = False
         self.coordinates = []
         self.initialized = False
-        self.python_cmd = self.detect_python_version()
+        self.python_cmd = f'"{sys.executable}"'
 
     def detect_python_version(self):
         try:
