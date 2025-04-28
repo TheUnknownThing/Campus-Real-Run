@@ -236,8 +236,10 @@ def kill_subprocess(process: subprocess.Popen):
         pass
 
 if __name__ == '__main__':
+    shell = CampusRunShell()
     try:
-        CampusRunShell().cmdloop()
+        shell.cmdloop()
     except KeyboardInterrupt:
         logger.info("\n程序被中断，正在清理... / Program interrupted, cleaning up...")
+        shell.do_cleanup('')
         sys.exit(0)
