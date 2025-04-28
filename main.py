@@ -7,6 +7,7 @@ import os
 import logging
 from pathlib import Path
 import random
+import psutil
 
 logging.basicConfig(
     level=logging.INFO,
@@ -64,8 +65,8 @@ Note:
                 return subprocess.check_output(command, shell=True, text=True)
             else:
                 process = subprocess.Popen(
-                    f'start cmd /k {command}',
-                    shell=True,
+                    command,
+                    shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True
@@ -101,21 +102,26 @@ Note:
 
         logger.info("正在启动tunneld服务... / Starting tunneld service...")
         self.tunneld_process = self.run_command(f"{self.python_cmd} -m pymobiledevice3 remote tunneld")
-        time.sleep(2)
 
         logger.info("正在启动tunnel服务... / Starting tunnel service...")
         tunnel_command = f"{self.python_cmd} -m pymobiledevice3 lockdown start-tunnel" if self.is_ios17_plus else \
                         f"{self.python_cmd} -m pymobiledevice3 remote start-tunnel"
         self.tunnel_process = self.run_command(tunnel_command)
-        time.sleep(2)
+        time.sleep(5)
 
-        logger.info("测试DVT服务... / Testing DVT service...")
-        test_output = self.run_command(f"{self.python_cmd} -m pymobiledevice3 developer dvt ls /", check_output=True)
-        if test_output and "/Applications" in test_output:
+        if self.tunneld_process.poll() is None and self.tunnel_process.poll() is None:
             logger.info("连接成功建立！ / Connection established successfully!")
             self.initialized = True
         else:
             logger.error("连接失败，请检查设备连接和权限设置 / Connection failed, please check device connection and permission settings")
+            for process in [self.tunneld_process, self.tunnel_process]:
+                if process.poll() is None:
+                    kill_subprocess(process)
+                else:
+                    out, err = process.communicate()
+                    logger.error(str(process.args) + "fails with output: ")
+                    logger.error(err)
+            self.do_cleanup('')
 
     def do_enable_dev_mode(self, arg):
         """
@@ -184,11 +190,11 @@ Note:
         用法 / Usage: cleanup
         """
         if self.tunneld_process:
-            self.tunneld_process.terminate()
+            kill_subprocess(self.tunneld_process)
             self.tunneld_process.wait()
             self.tunneld_process = None
         if self.tunnel_process:
-            self.tunnel_process.terminate()
+            kill_subprocess(self.tunnel_process)
             self.tunnel_process.wait()
             self.tunnel_process = None
         self.initialized = False
@@ -219,6 +225,15 @@ Note:
     # 别名
     do_quit = do_exit
     do_EOF = do_exit
+
+def kill_subprocess(process: subprocess.Popen):
+    try:
+        parent = psutil.Process(process.pid)
+        for child in parent.children(recursive=True):
+            child.kill()
+        parent.kill()
+    except psutil.NoSuchProcess:
+        pass
 
 if __name__ == '__main__':
     try:
