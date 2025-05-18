@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 import random
 import psutil
+import re
 
 logging.basicConfig(
     level=logging.INFO,
@@ -96,7 +97,10 @@ Note:
 
         logger.info("检查开发者模式状态... / Checking developer mode status...")
         dev_mode_status = self.run_command(f"{self.python_cmd} -m pymobiledevice3 amfi developer-mode-status", check_output=True)
-        if "false" in dev_mode_status:
+        if dev_mode_status == str():
+            logger.error("设备未连接 / Device is not connected.")
+            return
+        elif "false" in dev_mode_status.lower():
             logger.error("开发者模式未启用，请使用 'enable_dev_mode' 命令启用开发者模式 / Developer mode is not enabled, please use the 'enable_dev_mode' command to enable developer mode")
             return
 
@@ -177,12 +181,14 @@ Note:
                 text=True
             )
             for line in process.stdout:
+                if "ERROR" in line:
+                    plain_line = re.sub(r'\x1b\[[0-9;]*m', '', line)
+                    raise RuntimeError(plain_line)
                 print(line, end='')
+
         except KeyboardInterrupt:
             logger.info("\n停止位置模拟... / Stopping location simulation...")
             process.terminate()
-        except Exception as e:
-            logger.error(f"位置模拟过程中出错: {e} / Error during location simulation: {e}")
 
     def do_cleanup(self, arg):
         """
@@ -243,3 +249,19 @@ if __name__ == '__main__':
         logger.info("\n程序被中断，正在清理... / Program interrupted, cleaning up...")
         shell.do_cleanup('')
         sys.exit(0)
+    except Exception as e:
+        logger.error(f"程序异常终止: {e} / Program terminated with exception: {e}")
+        shell.do_cleanup('')
+        # Show Windows popup
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0,
+                f"程序异常终止:\n{e}",
+                "Campus-Real-Run 异常 / Exception",
+                0x10  # MB_ICONERROR
+            )
+        except Exception as popup_err:
+            logger.error(f"无法弹出异常提示窗口: {popup_err}")
+        sys.exit(1)
+        
