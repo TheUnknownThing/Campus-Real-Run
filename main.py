@@ -10,6 +10,8 @@ import random
 import psutil
 import re
 
+IS_LINUX = sys.platform.startswith('linux')
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -44,7 +46,7 @@ Note:
         self.is_ios17_plus = False
         self.coordinates = []
         self.initialized = False
-        self.python_cmd = f'"{sys.executable}"'
+        self.python_cmd = sys.executable if IS_LINUX else f'"{sys.executable}"'
 
     def detect_python_version(self):
         try:
@@ -66,7 +68,7 @@ Note:
                 return subprocess.check_output(command, shell=True, text=True)
             else:
                 process = subprocess.Popen(
-                    command,
+                    command.split(' ') if IS_LINUX else command,
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -253,6 +255,8 @@ if __name__ == '__main__':
         logger.error(f"程序异常终止: {e} / Program terminated with exception: {e}")
         shell.do_cleanup('')
         # Show Windows popup
+        if IS_LINUX:
+            sys.exit(1)
         try:
             import ctypes
             ctypes.windll.user32.MessageBoxW(
